@@ -1,0 +1,22 @@
+cloudflare:
+
+jupyterhub:
+  singleuser:
+    image:
+      name: "jupyter/base-notebook"
+      tag: "latest"
+  hub:
+    extraVolumes:
+      - name: custom-config
+        configMap:
+          name: custom-jupyterhub-config
+    extraVolumeMounts:
+      - name: custom-config
+        mountPath: /etc/jupyterhub/custom
+    extraConfig:
+      custom_profiles: |
+        import sys
+        sys.path.append('/etc/jupyterhub/custom')
+
+        from custom_config import custom_options_form
+        c.KubeSpawner.options_form = custom_options_form
