@@ -84,36 +84,6 @@ async def get_available_resources():
     return node_resources
 
 
-async def get_max_available_gpus():
-    try:
-        # Load the in-cluster Kubernetes configuration if running inside a pod, else load the local kubeconfig.
-        if "KUBERNETES_SERVICE_HOST" in os.environ:
-            await kube.config.load_incluster_config()
-        else:
-            await kube.config.load_kube_config()
-
-        api_instance = kube.client.CoreV1Api()
-        nodes = await api_instance.list_node()
-
-        max_available_gpus = 0
-        total_gpus = 0
-
-        for node in nodes.items:
-            allocatable = node.status.allocatable
-            available_gpus = int(allocatable.get("nvidia.com/gpu", 0))
-            max_available_gpus = max(max_available_gpus, available_gpus)
-            total_gpus += available_gpus
-
-        await api_instance.api_client.close()
-
-    except Exception as e:
-        print(f"Error querying available GPUs: {e}")
-        max_available_gpus = 0
-        total_gpus = 0
-
-    return max_available_gpus, total_gpus
-
-
 async def available_resources():
     available_resources_form = """
         <!-- Begin "Available resources" section -->
@@ -297,7 +267,7 @@ async def custom_options_form(spawner):
                     "choices": cpu_profile_options,
                 },
                 "gpu": {
-                    "display_name": f"GPUs",
+                    "display_name": "GPUs",
                     "choices": gpu_profile_options,
                 },
                 "memory": {
